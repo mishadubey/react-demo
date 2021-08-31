@@ -6,7 +6,7 @@ import List from './list';
 import TaskService from '../../services/task';
 import ITask from '../../types/task';
 import { useAppSelector } from '../../store/hooks';
-import {selectFormData, selectFormDataState} from '../../store/slices/tasks';
+import { selectFormData, selectFormDataState } from '../../store/slices/tasks';
 
 const Tasks: React.FC = () => {
 
