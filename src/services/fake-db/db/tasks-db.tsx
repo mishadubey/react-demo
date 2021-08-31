@@ -1,10 +1,11 @@
-// import _ from 'lodash';
+import _ from 'lodash';
 import sub from 'date-fns/sub';
 import getUnixTime from 'date-fns/getUnixTime';
 import add from 'date-fns/add';
-// import parse from 'date-fns/parse';
-// import isValid from 'date-fns/isValid';
+import parse from 'date-fns/parse';
+import isValid from 'date-fns/isValid';
 import mock from '../mock';
+import { AxiosRequestConfig } from 'axios';
 
 const tasksDb = {
   records: [
@@ -139,24 +140,34 @@ const tasksDb = {
   ],
 };
 
-mock.onGet('/api/tasks').reply(() => {
+mock.onGet('/api/tasks').reply((request: AxiosRequestConfig) => {
   let response = tasksDb.records;
 
-  // const name = 'fix';
-  // let searchArray = name.trim().split(' ');
-  // let regExp = new RegExp(searchArray.join('|'), 'i');
-  // response = _.filter(response, task => regExp.test(task.name));
-  //
-  // const status = 'Client Review';
-  // response = _.filter(response, task => task.status === status);
-  //
-  // const dueFrom = '08/24/2021';
-  // const dueTo = '08/31/2021';
-  // const dueDateFrom = parse(dueFrom + ' 00:00:00', 'MM/dd/yyyy HH:mm:ss', new Date());
-  // const dueDateTo = parse(dueTo + ' 23:59:59', 'MM/dd/yyyy HH:mm:ss', new Date());
-  // if (isValid(dueDateFrom) && isValid(dueDateTo)) {
-  //   response = _.filter(response, task => (task.dueDate > getUnixTime(dueDateFrom) && task.dueDate < getUnixTime(dueDateTo)));
-  // }
+  const data = request?.data ? JSON.parse(request.data) : {};
+
+  const title = data?.title || '';
+  if (title) {
+    let searchArray = title.trim().split(' ');
+    let regExp = new RegExp(searchArray.join('|'), 'i');
+    response = _.filter(response, task => regExp.test(task.name));
+  }
+
+  const status = data?.status || '';
+  if (status) {
+    response = _.filter(response, task => task.status === status);
+  }
+
+  const dueFrom = data?.dueDateFrom ? data?.dueDateFrom : null;
+  const dueTo = data?.dueDateTo ? data?.dueDateTo : null;
+  const dueDateFrom = dueFrom ? parse(dueFrom + ' 00:00:00', 'MM/dd/yyyy HH:mm:ss', new Date()): 0;
+  const dueDateTo = dueTo ? parse(dueTo + ' 23:59:59', 'MM/dd/yyyy HH:mm:ss', new Date()) : 0;
+  if (dueDateFrom && dueDateTo && isValid(dueDateFrom) && isValid(dueDateTo)) {
+    response = _.filter(response, task => (task.dueDate > getUnixTime(dueDateFrom) && task.dueDate < getUnixTime(dueDateTo)));
+  } else if (dueDateFrom && isValid(dueDateFrom)) {
+    response = _.filter(response, task => (task.dueDate > getUnixTime(dueDateFrom)));
+  } else if (dueDateTo && isValid(dueDateTo)) {
+    response = _.filter(response, task => (task.dueDate < getUnixTime(dueDateTo)));
+  }
 
   return [200, response];
 });

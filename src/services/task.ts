@@ -2,8 +2,10 @@ import ITask from '../types/task';
 import axios from 'axios';
 
 class TaskService {
-  getTasks() {
-    return axios.get<ITask[]>('/api/tasks');
+  getTasks(formData: object) {
+    return axios.get<ITask[]>('/api/tasks', {
+      data: formData
+    });
   }
 
   getTask(id: string) {
